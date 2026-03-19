@@ -620,11 +620,15 @@ async function fetchPrice(type) {
   setRefreshLoading(p, true);
 
   try {
+    const credentials = btoa(`${cfg.user}:${cfg.pass}`);
     const url = `${ICE_URL}?s=${encodeURIComponent(contract)}`;
 
     const response = await fetch(url, {
       method: 'GET',
-      headers: { 'Accept': 'text/xml, application/xml, */*' }
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+        'Accept': 'text/xml, application/xml, */*'
+      }
     });
 
     if (response.status === 401) throw new Error('Identifiants ICE incorrects (401)');
