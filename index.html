@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Coffee Pricer · Cocoasource</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222538;
+      --border: #2e3150;
+      --accent: #4f6ef7;
+      --accent2: #7c5cbf;
+      --robusta: #e8a83e;
+      --arabica: #5bc8a8;
+      --text: #e8eaf6;
+      --muted: #7b82a8;
+      --green: #4caf7d;
+      --red: #e05c5c;
+      --r: 14px;
+      --rs: 8px;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh; padding-bottom: 40px;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 18px 0; position: sticky; top: 0; z-index: 100;
+    }
+    .header-top {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .logo-name { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-sub { font-size: 11px; color: var(--muted); }
+    .icon-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); border-radius: 9px;
+      width: 36px; height: 36px; font-size: 17px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* TABS */
+    .tabs { display: flex; }
+    .tab {
+      flex: 1; padding: 10px 6px; text-align: center;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border-bottom: 3px solid transparent; color: var(--muted);
+      transition: all 0.2s; letter-spacing: 0.3px;
+    }
+    .tab.robusta.active { color: var(--robusta); border-color: var(--robusta); }
+    .tab.arabica.active { color: var(--arabica); border-color: var(--arabica); }
+
+    /* PAGES */
+    .page { display: none; padding: 14px 16px; }
+    .page.active { display: block; }
+
+    /* ICE CARD */
+    .ice-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px; margin-bottom: 12px;
+    }
+    .ice-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .ice-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+    .badge {
+      font-size: 10px; font-weight: 700; padding: 3px 9px;
+      border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .badge.live { background: rgba(76,175,125,0.15); color: var(--green); }
+    .badge.manual { background: rgba(79,110,247,0.12); color: var(--accent); }
+    .badge.loading { background: rgba(232,168,62,0.12); color: var(--robusta); }
+    .badge.error { background: rgba(224,92,92,0.12); color: var(--red); }
+
+    .ice-price-row { display: flex; align-items: flex-end; gap: 6px; }
+    .ice-price { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
+    .ice-price.rc { color: var(--robusta); }
+    .ice-price.kc { color: var(--arabica); }
+    .ice-unit { font-size: 13px; color: var(--muted); padding-bottom: 5px; }
+    .ice-meta { font-size: 11px; color: var(--muted); margin-top: 6px; min-height: 16px; }
+
+    /* CONTRACT SELECTOR */
+    .contract-title { font-size: 11px; color: var(--muted); font-weight: 600; margin: 10px 0 6px; }
+    .contracts { display: flex; flex-wrap: wrap; gap: 6px; }
+    .contract-pill {
+      padding: 5px 11px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
+      color: var(--muted); transition: all 0.18s; letter-spacing: 0.3px;
+    }
+    .contract-pill.active.rc { background: rgba(232,168,62,0.15); color: var(--robusta); border-color: var(--robusta); }
+    .contract-pill.active.kc { background: rgba(91,200,168,0.15); color: var(--arabica); border-color: var(--arabica); }
+
+    /* REFRESH */
+    .ice-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-refresh {
+      flex: 1; padding: 10px; border-radius: var(--rs);
+      border: 1px solid var(--border); background: var(--surface2);
+      color: var(--text); font-size: 13px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 6px; transition: all 0.2s;
+    }
+    .btn-refresh:active { background: var(--border); }
+    .btn-refresh.disabled { opacity: 0.5; pointer-events: none; }
+
+    /* MANUAL INPUT */
+    .manual-row { display: flex; gap: 8px; margin-top: 10px; }
+    .manual-row input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); border-radius: var(--rs);
+      padding: 9px 12px; font-size: 16px; font-weight: 700;
+    }
+    .manual-row input:focus { outline: none; border-color: var(--accent); }
+    .btn-apply {
+      background: var(--accent); color: #fff; border: none;
+      border-radius: var(--rs); padding: 9px 16px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+
+    /* SECTION TITLE */
+    .section-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      color: var(--muted); text-transform: uppercase;
+      margin: 16px 0 10px;
+    }
+
+    /* INPUTS GRID */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .input-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--rs); padding: 12px;
+    }
+    .input-card label {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      letter-spacing: 0.5px; text-transform: uppercase;
+      display: block; margin-bottom: 6px;
+    }
+    .input-card input {
+      width: 100%; background: transparent; border: none;
+      color: var(--text); font-size: 21px; font-weight: 700; letter-spacing: -0.5px;
+    }
+    .input-card input:focus { outline: none; }
+    .input-card .unit { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    /* RESULTS */
+    .results-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px; margin-top: 12px;
+    }
+    .results-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+    .rrow {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .rrow:last-child { border-bottom: none; padding-bottom: 0; }
+    .rrow:first-child { padding-top: 0; }
+    .rlabel { font-size: 13px; color: var(--muted); }
+    .rvals { text-align: right; }
+    .rmain { font-size: 17px; font-weight: 700; }
+    .rsub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .rrow.hl { background: rgba(79,110,247,0.07); margin: 0 -16px; padding: 12px 16px; }
+    .rrow.hl .rmain { font-size: 21px; color: var(--accent); }
+
+    .diff-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    }
+    .diff-chip.pos { background: rgba(76,175,125,0.15); color: var(--green); }
+    .diff-chip.neg { background: rgba(224,92,92,0.15); color: var(--red); }
+
+    /* API NOTE BOX */
+    .note-box {
+      background: rgba(79,110,247,0.08); border: 1px solid rgba(79,110,247,0.2);
+      border-radius: var(--rs); padding: 10px 12px; font-size: 12px;
+      color: var(--muted); line-height: 1.6; margin-top: 10px;
+    }
+    .note-box.warn {
+      background: rgba(232,168,62,0.08); border-color: rgba(232,168,62,0.2); color: var(--robusta);
+    }
+    .note-box strong { color: var(--text); }
+
+    /* SETTINGS OVERLAY */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75); z-index: 200;
+    }
+    .overlay.open { display: block; }
+    .settings-panel {
+      position: absolute; top: 0; right: 0;
+      width: min(420px, 100vw); height: 100%;
+      background: var(--surface); border-left: 1px solid var(--border);
+      overflow-y: auto; padding: 20px;
+    }
+    .sp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .sp-header h2 { font-size: 18px; font-weight: 700; }
+    .close-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); width: 32px; height: 32px; border-radius: 8px;
+      cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center;
+    }
+    .sp-group { margin-bottom: 22px; }
+    .sp-group h3 {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 12px;
+      padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    }
+    .sp-field { margin-bottom: 12px; }
+    .sp-field label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; font-weight: 600; }
+    .sp-field input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); border-radius: var(--rs); padding: 10px 12px; font-size: 14px;
+    }
+    .sp-field input:focus { outline: none; border-color: var(--accent); }
+    .btn-save {
+      width: 100%; background: var(--accent); color: #fff;
+      border: none; border-radius: var(--rs);
+      padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer;
+      margin-top: 4px;
+    }
+    .btn-test {
+      width: 100%; background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--rs);
+      padding: 11px; font-size: 14px; font-weight: 600; cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* SPINNER */
+    .spin {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid var(--border); border-top-color: var(--robusta);
+      border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: 10px 20px; border-radius: 10px;
+      font-size: 13px; font-weight: 600; z-index: 999;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      animation: fadein 0.2s ease; pointer-events: none;
+    }
+    @keyframes fadein { from { opacity: 0; transform: translateX(-50%) translateY(8px); } }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">☕</div>
+      <div>
+        <div class="logo-name">Coffee Pricer</div>
+        <div class="logo-sub">by Cocoasource</div>
+      </div>
+    </div>
+    <button class="icon-btn" onclick="openSettings()">⚙️</button>
+  </div>
+  <div class="tabs">
+    <div class="tab robusta active" onclick="switchTab('robusta')">🟡 ROBUSTA</div>
+    <div class="tab arabica" onclick="switchTab('arabica')">🟢 ARABICA</div>
+  </div>
+</div>
+
+<!-- ═══ ROBUSTA PAGE ═══ -->
+<div id="page-robusta" class="page active">
+
+  <div class="ice-card">
+    <div class="ice-top">
+      <span class="ice-label">ICE London · Robusta (RC)</span>
+      <span id="r-badge" class="badge manual">MANUEL</span>
+    </div>
+    <div class="ice-price-row">
+      <span id="r-price" class="ice-price rc">3 500</span>
+      <span class="ice-unit">USD/MT</span>
+    </div>
+    <div id="r-meta" class="ice-meta">Sélectionnez un contrat et actualisez</div>
+
+    <div class="contract-title">Contrat actif :</div>
+    <div class="contracts" id="r-contracts">
+      <!-- Filled by JS -->
+    </div>
+
+    <div class="ice-actions">
+      <button class="btn-refresh" id="r-btn" onclick="fetchPrice('robusta')">
+        <span id="r-icon">↻</span> Actualiser ICE
+      </button>
+    </div>
+    <div class="manual-row">
+      <input type="number" id="r-manual" placeholder="Entrer prix manuellement…" step="0.5" />
+      <button class="btn-apply" onclick="applyManual('robusta')">OK</button>
+    </div>
+  </div>
+
+  <div class="section-title">Paramètres</div>
+  <div class="grid2">
+    <div class="input-card">
+      <label>Différentiel CCS</label>
+      <input type="number" id="r-diff" value="300" step="1" oninput="calc('robusta')" />
+      <div class="unit">USD / MT</div>
+    </div>
+    <div class="input-card">
+      <label>Transfer Cost</label>
+      <input type="number" id="r-tc" value="373.18" step="0.01" oninput="calc('robusta')" />
+      <div class="unit">EUR / MT</div>
+    </div>
+    <div class="input-card">
+      <label>FX USD / EUR</label>
+      <input type="number" id="r-fx" value="1.1459" step="0.0001" oninput="calc('robusta')" />
+      <div class="unit">taux de change</div>
+    </div>
+    <div class="input-card">
+      <label>EUR / CFA (fixe)</label>
+      <input type="number" id="r-cfa" value="655.957" step="0.001" oninput="calc('robusta')" />
+      <div class="unit">taux fixe</div>
+    </div>
+  </div>
+
+  <div class="results-card">
+    <div class="results-title">📊 Résultats</div>
+    <div class="rrow">
+      <div class="rlabel">Prix FOB</div>
+      <div class="rvals">
+        <div class="rmain" id="r-fob-usd">—</div>
+        <div class="rsub" id="r-fob-eur">—</div>
+        <div class="rsub" id="r-fob-cfa">—</div>
+      </div>
+    </div>
+    <div class="rrow hl">
+      <div class="rlabel">Prix achat max</div>
+      <div class="rvals">
+        <div class="rmain" id="r-buy-usd">—</div>
+        <div class="rsub" id="r-buy-eur">—</div>
+        <div class="rsub" id="r-buy-cfa">—</div>
+      </div>
+    </div>
+    <div class="rrow">
+      <div class="rlabel">Prix achat max / kg</div>
+      <div class="rvals">
+        <div class="rmain" id="r-buy-kg">—</div>
+        <div class="rsub" id="r-buy-kg2">—</div>
+      </div>
+    </div>
+    <div class="rrow">
+      <div class="rlabel">Différentiel</div>
+      <div class="rvals"><span id="r-diff-chip" class="diff-chip pos">+300 USD</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ARABICA PAGE ═══ -->
+<div id="page-arabica" class="page">
+
+  <div class="ice-card">
+    <div class="ice-top">
+      <span class="ice-label">ICE New York · Arabica (KC)</span>
+      <span id="a-badge" class="badge manual">MANUEL</span>
+    </div>
+    <div class="ice-price-row">
+      <span id="a-price" class="ice-price kc">3 200</span>
+      <span class="ice-unit">USD/MT</span>
+    </div>
+    <div id="a-meta" class="ice-meta">Sélectionnez un contrat et actualisez</div>
+
+    <div class="contract-title" id="a-contract-title">Contrat actif :</div>
+    <div class="contracts" id="a-contracts"></div>
+
+    <div class="ice-actions" style="margin-top:10px">
+      <button class="btn-refresh" id="a-btn" onclick="fetchPrice('arabica')">
+        <span id="a-icon">↻</span> Actualiser ICE
+      </button>
+    </div>
+    <div class="manual-row">
+      <input type="number" id="a-manual" placeholder="Entrer prix manuellement…" step="0.5" />
+      <button class="btn-apply" onclick="applyManual('arabica')">OK</button>
+    </div>
+  </div>
+
+  <div class="section-title">Paramètres</div>
+  <div class="grid2">
+    <div class="input-card">
+      <label>Différentiel CCS</label>
+      <input type="number" id="a-diff" value="300" step="1" oninput="calc('arabica')" />
+      <div class="unit">USD / MT</div>
+    </div>
+    <div class="input-card">
+      <label>Transfer Cost</label>
+      <input type="number" id="a-tc" value="373.18" step="0.01" oninput="calc('arabica')" />
+      <div class="unit">EUR / MT</div>
+    </div>
+    <div class="input-card">
+      <label>FX USD / EUR</label>
+      <input type="number" id="a-fx" value="1.1459" step="0.0001" oninput="calc('arabica')" />
+      <div class="unit">taux de change</div>
+    </div>
+    <div class="input-card">
+      <label>EUR / CFA (fixe)</label>
+      <input type="number" id="a-cfa" value="655.957" step="0.001" oninput="calc('arabica')" />
+      <div class="unit">taux fixe</div>
+    </div>
+  </div>
+
+  <div class="results-card">
+    <div class="results-title">📊 Résultats</div>
+    <div class="rrow">
+      <div class="rlabel">Prix FOB</div>
+      <div class="rvals">
+        <div class="rmain" id="a-fob-usd">—</div>
+        <div class="rsub" id="a-fob-eur">—</div>
+        <div class="rsub" id="a-fob-cfa">—</div>
+      </div>
+    </div>
+    <div class="rrow hl">
+      <div class="rlabel">Prix achat max</div>
+      <div class="rvals">
+        <div class="rmain" id="a-buy-usd">—</div>
+        <div class="rsub" id="a-buy-eur">—</div>
+        <div class="rsub" id="a-buy-cfa">—</div>
+      </div>
+    </div>
+    <div class="rrow">
+      <div class="rlabel">Prix achat max / kg</div>
+      <div class="rvals">
+        <div class="rmain" id="a-buy-kg">—</div>
+        <div class="rsub" id="a-buy-kg2">—</div>
+      </div>
+    </div>
+    <div class="rrow">
+      <div class="rlabel">Différentiel</div>
+      <div class="rvals"><span id="a-diff-chip" class="diff-chip pos">+300 USD</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS PANEL ═══ -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="settings-panel" onclick="event.stopPropagation()">
+    <div class="sp-header">
+      <h2>⚙️ Paramètres</h2>
+      <button class="close-btn" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div class="sp-group">
+      <h3>ICE Data Services — Authentification</h3>
+      <div class="sp-field">
+        <label>Username</label>
+        <input type="text" id="s-user" placeholder="Votre username ICE" autocomplete="username" />
+      </div>
+      <div class="sp-field">
+        <label>Password</label>
+        <input type="password" id="s-pass" placeholder="Votre password ICE" autocomplete="current-password" />
+      </div>
+      <div class="note-box">
+        🔐 Identifiants stockés localement sur votre appareil uniquement.<br/>
+        URL: <code>https://xml.dataservices.theice.com/xtick</code>
+      </div>
+    </div>
+
+    <div class="sp-group">
+      <h3>Contrats Robusta (RC) actifs</h3>
+      <div class="sp-field">
+        <label>Liste de contrats (séparés par des virgules)</label>
+        <input type="text" id="s-rc-instruments"
+          value="RC 26H-ICE,RC 26K-ICE,RC 26N-ICE,RC 26U-ICE,RC 26X-ICE,RC 27F-ICE,RC 27H-ICE"
+          placeholder="RC 26H-ICE,RC 26K-ICE,..." />
+      </div>
+      <div class="note-box">
+        📅 Mois: F=Jan · G=Fév · H=Mar · J=Avr · K=Mai · M=Jun · N=Juil · Q=Aoû · U=Sep · V=Oct · X=Nov · Z=Déc
+      </div>
+    </div>
+
+    <div class="sp-group">
+      <h3>Contrats Arabica (KC) — optionnel</h3>
+      <div class="sp-field">
+        <label>Liste de contrats KC (laisser vide si non disponible)</label>
+        <input type="text" id="s-kc-instruments" placeholder="KC H26,KC K26,KC N26,..." />
+      </div>
+    </div>
+
+    <div class="sp-group">
+      <h3>Auto-refresh</h3>
+      <div class="sp-field">
+        <label>Intervalle en secondes (0 = désactivé)</label>
+        <input type="number" id="s-interval" value="60" min="0" step="10" />
+      </div>
+    </div>
+
+    <button class="btn-save" onclick="saveSettings()">💾 Enregistrer</button>
+    <button class="btn-test" onclick="testConnection()">🔌 Tester la connexion ICE</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────
+// STATE
+// ─────────────────────────────────────
+const S = {
+  robusta: { price: 3500, updated: null, mode: 'manual', contract: 'RC 26N-ICE' },
+  arabica: { price: 3200, updated: null, mode: 'manual', contract: null }
+};
+
+// ─────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────
+function getCfg() {
+  const raw = localStorage.getItem('cps_cfg');
+  return raw ? JSON.parse(raw) : {
+    user: '', pass: '',
+    rcInstruments: 'RC 26H-ICE,RC 26K-ICE,RC 26N-ICE,RC 26U-ICE,RC 26X-ICE,RC 27F-ICE,RC 27H-ICE',
+    kcInstruments: 'KC H26,KC K26,KC N26,KC U26,KC Z26',
+    interval: 60
+  };
+}
+
+function loadSettingsUI() {
+  const c = getCfg();
+  document.getElementById('s-user').value = c.user || '';
+  document.getElementById('s-pass').value = c.pass || '';
+  document.getElementById('s-rc-instruments').value = c.rcInstruments || '';
+  document.getElementById('s-kc-instruments').value = c.kcInstruments || 'KC H26,KC K26,KC N26,KC U26,KC Z26';
+  document.getElementById('s-interval').value = c.interval ?? 60;
+}
+
+function saveSettings() {
+  const c = {
+    user: document.getElementById('s-user').value.trim(),
+    pass: document.getElementById('s-pass').value,
+    rcInstruments: document.getElementById('s-rc-instruments').value.trim(),
+    kcInstruments: document.getElementById('s-kc-instruments').value.trim(),
+    interval: parseInt(document.getElementById('s-interval').value) || 0
+  };
+  localStorage.setItem('cps_cfg', JSON.stringify(c));
+  closeSettings();
+  buildContracts();
+  setupAutoRefresh();
+  toast('✅ Paramètres enregistrés');
+}
+
+// ─────────────────────────────────────
+// CONTRACT PILLS
+// ─────────────────────────────────────
+const MONTH_NAMES = {
+  F:'Jan', G:'Fév', H:'Mar', J:'Avr', K:'Mai', M:'Jun',
+  N:'Juil', Q:'Aoû', U:'Sep', V:'Oct', X:'Nov', Z:'Déc'
+};
+
+function parsePillLabel(symbol) {
+  // Format 1: "RC 26H-ICE" → "Mar 26"
+  const m1 = symbol.match(/[A-Z]{2}\s+(\d{2})([A-Z])-ICE/);
+  if (m1) return (MONTH_NAMES[m1[2]] || m1[2]) + ' 20' + m1[1];
+
+  // Format 2: "KC H26" → "Mar 26"
+  const m2 = symbol.match(/[A-Z]{2}\s+([A-Z])(\d{2})$/);
+  if (m2) return (MONTH_NAMES[m2[1]] || m2[1]) + ' 20' + m2[2];
+
+  return symbol;
+}
+
+function buildContracts() {
+  const cfg = getCfg();
+  buildPills('robusta', cfg.rcInstruments, 'rc');
+  buildPills('arabica', cfg.kcInstruments || '', 'kc');
+}
+
+function buildPills(type, csvList, cls) {
+  const containerId = type === 'robusta' ? 'r-contracts' : 'a-contracts';
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  const list = csvList ? csvList.split(',').map(s => s.trim()).filter(Boolean) : [];
+  if (list.length === 0) {
+    if (type === 'arabica') {
+      container.innerHTML = '<span style="font-size:12px;color:var(--muted)">Aucun contrat KC configuré — mode manuel</span>';
+    }
+    return;
+  }
+
+  list.forEach((sym, i) => {
+    const pill = document.createElement('button');
+    pill.className = `contract-pill ${cls}${i === 0 ? ' active' : ''}`;
+    pill.textContent = parsePillLabel(sym);
+    pill.dataset.symbol = sym;
+    pill.onclick = () => {
+      container.querySelectorAll('.contract-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      S[type].contract = sym;
+    };
+    container.appendChild(pill);
+  });
+
+  S[type].contract = list[0];
+}
+
+// ─────────────────────────────────────
+// ICE API FETCH  (XML Basic Auth)
+// ─────────────────────────────────────
+const ICE_URL = 'https://xml.dataservices.theice.com/xtick';
+
+async function fetchPrice(type) {
+  const cfg = getCfg();
+  const p = type === 'robusta' ? 'r' : 'a';
+
+  if (!cfg.user || !cfg.pass) {
+    toast('⚠️ Configurez votre username/password ICE dans les paramètres');
+    openSettings();
+    return;
+  }
+
+  const contract = S[type].contract;
+  if (!contract) {
+    toast('⚠️ Aucun contrat sélectionné');
+    return;
+  }
+
+  setBadge(type, 'loading', 'CHARGEMENT…');
+  setRefreshLoading(p, true);
+
+  try {
+    // Build Basic Auth header
+    const credentials = btoa(`${cfg.user}:${cfg.pass}`);
+    const url = `${ICE_URL}?s=${encodeURIComponent(contract)}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+        'Accept': 'text/xml, application/xml, */*'
+      }
+    });
+
+    if (response.status === 401) throw new Error('Identifiants ICE incorrects (401)');
+    if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+
+    const text = await response.text();
+    const price = parseIceXml(text);
+
+    if (!price) throw new Error('Prix introuvable dans la réponse XML');
+
+    S[type].price = price;
+    S[type].mode = 'live';
+    S[type].updated = new Date();
+    updatePriceDisplay(type);
+    calc(type);
+
+  } catch (err) {
+    console.error('[ICE]', err);
+    S[type].mode = 'error';
+    setBadge(type, 'error', 'ERREUR');
+    setMeta(type, `❌ ${err.message}`);
+    toast(`❌ ${err.message}`);
+  } finally {
+    setRefreshLoading(p, false);
+  }
+}
+
+function parseIceXml(xmlText) {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, 'text/xml');
+
+    // Try common ICE XML field names for last price
+    const fields = ['last', 'lastPrice', 'LastPrice', 'Last', 'price', 'Price',
+                    'settlement', 'Settlement', 'close', 'Close', 'lp', 'LP'];
+    for (const field of fields) {
+      const el = doc.querySelector(field);
+      if (el && el.textContent) {
+        const v = parseFloat(el.textContent.replace(/,/g, ''));
+        if (!isNaN(v) && v > 0) return v;
+      }
+      // Also try attributes
+      const byAttr = doc.querySelector(`[name="${field}"]`);
+      if (byAttr) {
+        const v = parseFloat(byAttr.getAttribute('value') || byAttr.textContent);
+        if (!isNaN(v) && v > 0) return v;
+      }
+    }
+
+    // Fallback: look for any numeric node that looks like a coffee price (500–20000 USD/MT)
+    const allText = doc.documentElement.textContent;
+    const matches = allText.match(/\b([5-9]\d{3}|[1-9]\d{4})\b/g);
+    if (matches && matches.length > 0) return parseFloat(matches[0]);
+
+    console.warn('[ICE XML raw]', xmlText.slice(0, 500));
+    return null;
+  } catch (e) {
+    console.error('[XML parse error]', e);
+    return null;
+  }
+}
+
+// ─────────────────────────────────────
+// DISPLAY HELPERS
+// ─────────────────────────────────────
+function updatePriceDisplay(type) {
+  const p = type === 'robusta' ? 'r' : 'a';
+  const { price, mode, updated, contract } = S[type];
+
+  document.getElementById(`${p}-price`).textContent =
+    price.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+  if (mode === 'live') setBadge(type, 'live', 'LIVE');
+  else if (mode === 'error') setBadge(type, 'error', 'ERREUR');
+  else setBadge(type, 'manual', 'MANUEL');
+
+  const time = updated ? updated.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+  const contractLabel = contract ? ` · ${parsePillLabel(contract)}` : '';
+  setMeta(type, time ? `MAJ: ${time}${contractLabel}` : `Sélectionnez un contrat et actualisez${contractLabel}`);
+}
+
+function setBadge(type, cls, text) {
+  const p = type === 'robusta' ? 'r' : 'a';
+  const el = document.getElementById(`${p}-badge`);
+  el.className = `badge ${cls}`;
+  el.textContent = text;
+}
+function setMeta(type, text) {
+  const p = type === 'robusta' ? 'r' : 'a';
+  document.getElementById(`${p}-meta`).textContent = text;
+}
+function setRefreshLoading(p, loading) {
+  const btn = document.getElementById(`${p}-btn`);
+  const icon = document.getElementById(`${p}-icon`);
+  btn.classList.toggle('disabled', loading);
+  icon.innerHTML = loading ? '<span class="spin"></span>' : '↻';
+}
+
+// ─────────────────────────────────────
+// MANUAL PRICE
+// ─────────────────────────────────────
+function applyManual(type) {
+  const p = type === 'robusta' ? 'r' : 'a';
+  const val = parseFloat(document.getElementById(`${p}-manual`).value);
+  if (!val || isNaN(val) || val <= 0) { toast('⚠️ Entrez un prix valide'); return; }
+  S[type].price = val;
+  S[type].mode = 'manual';
+  S[type].updated = new Date();
+  updatePriceDisplay(type);
+  calc(type);
+  document.getElementById(`${p}-manual`).value = '';
+}
+
+// ─────────────────────────────────────
+// CALCULATIONS  (formula from Excel)
+// ─────────────────────────────────────
+function calc(type) {
+  const p = type === 'robusta' ? 'r' : 'a';
+  const ice = S[type].price;
+  const diff     = parseFloat(document.getElementById(`${p}-diff`).value) || 0;
+  const tcEUR    = parseFloat(document.getElementById(`${p}-tc`).value)   || 0;
+  const fx       = parseFloat(document.getElementById(`${p}-fx`).value)   || 1;
+  const cfaRate  = parseFloat(document.getElementById(`${p}-cfa`).value)  || 655.957;
+
+  const fobUSD = ice + diff;
+  const fobEUR = fobUSD / fx;
+  const fobCFA = fobEUR * cfaRate;
+
+  const tcUSD  = tcEUR * fx;
+  const buyUSD = fobUSD - tcUSD;
+  const buyEUR = fobEUR - tcEUR;
+  const buyCFA = buyEUR * cfaRate;
+  const buyKg  = buyCFA / 1000;
+  const buyKgUSD = buyUSD / 1000;
+
+  const f = (n, d=0) => n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  document.getElementById(`${p}-fob-usd`).textContent  = `${f(fobUSD)} USD/MT`;
+  document.getElementById(`${p}-fob-eur`).textContent  = `${f(fobEUR, 2)} EUR/MT`;
+  document.getElementById(`${p}-fob-cfa`).textContent  = `${f(fobCFA)} CFA/MT`;
+  document.getElementById(`${p}-buy-usd`).textContent  = `${f(buyUSD, 2)} USD/MT`;
+  document.getElementById(`${p}-buy-eur`).textContent  = `${f(buyEUR, 2)} EUR/MT`;
+  document.getElementById(`${p}-buy-cfa`).textContent  = `${f(buyCFA)} CFA/MT`;
+  document.getElementById(`${p}-buy-kg`).textContent   = `${f(buyKg, 2)} CFA/kg`;
+  document.getElementById(`${p}-buy-kg2`).textContent  = `${f(buyKgUSD, 4)} USD/kg`;
+
+  const chip = document.getElementById(`${p}-diff-chip`);
+  chip.textContent = (diff >= 0 ? '+' : '') + f(diff) + ' USD';
+  chip.className = `diff-chip ${diff >= 0 ? 'pos' : 'neg'}`;
+}
+
+// ─────────────────────────────────────
+// AUTO REFRESH
+// ─────────────────────────────────────
+let _timer = null;
+function setupAutoRefresh() {
+  if (_timer) clearInterval(_timer);
+  const { interval, user, pass } = getCfg();
+  if (interval > 0 && user && pass) {
+    _timer = setInterval(() => {
+      if (S.robusta.contract) fetchPrice('robusta');
+      if (S.arabica.contract) fetchPrice('arabica');
+    }, interval * 1000);
+  }
+}
+
+// ─────────────────────────────────────
+// TEST CONNECTION
+// ─────────────────────────────────────
+async function testConnection() {
+  const cfg = getCfg();
+  if (!cfg.user || !cfg.pass) { toast('⚠️ Entrez username/password d\'abord'); return; }
+  const firstContract = (cfg.rcInstruments || '').split(',')[0]?.trim();
+  if (!firstContract) { toast('⚠️ Aucun contrat RC configuré'); return; }
+  toast('🔌 Test en cours…');
+  S.robusta.contract = firstContract;
+  await fetchPrice('robusta');
+}
+
+// ─────────────────────────────────────
+// SETTINGS PANEL
+// ─────────────────────────────────────
+function openSettings() {
+  loadSettingsUI();
+  document.getElementById('overlay').classList.add('open');
+}
+function closeSettings() { document.getElementById('overlay').classList.remove('open'); }
+function overlayClick(e) { if (e.target === document.getElementById('overlay')) closeSettings(); }
+
+// ─────────────────────────────────────
+// TABS
+// ─────────────────────────────────────
+function switchTab(type) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab.${type}`).classList.add('active');
+  document.getElementById(`page-${type}`).classList.add('active');
+}
+
+// ─────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────
+function toast(msg) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ─────────────────────────────────────
+// INIT
+// ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildContracts();
+  calc('robusta');
+  calc('arabica');
+  setupAutoRefresh();
+});
+</script>
+</body>
+</html>
