@@ -789,7 +789,6 @@ function setupAutoRefresh() {
 // ─────────────────────────────────────
 async function testConnection() {
   const cfg = getCfg();
-  if (!cfg.user || !cfg.pass) { toast('⚠️ Entrez username/password d\'abord'); return; }
   const firstContract = (cfg.rcInstruments || '').split(',')[0]?.trim();
   if (!firstContract) { toast('⚠️ Aucun contrat RC configuré'); return; }
   toast('🔌 Test en cours…');
