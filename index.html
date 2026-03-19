@@ -453,16 +453,9 @@
       <button class="close-btn" onclick="closeSettings()">✕</button>
     </div>
 
-    <div class="sp-group">
-      <h3>ICE Data Services — Authentification</h3>
-      <div class="sp-field">
-        <label>Username</label>
-        <input type="text" id="s-user" placeholder="Votre username ICE" autocomplete="username" />
-      </div>
-      <div class="sp-field">
-        <label>Password</label>
-        <input type="password" id="s-pass" placeholder="Votre password ICE" autocomplete="current-password" />
-      </div>
+    <div style="display:none">
+      <input type="hidden" id="s-user" />
+      <input type="hidden" id="s-pass" />
     </div>
 
     <div class="sp-group">
@@ -604,7 +597,7 @@ function buildPills(type, csvList, cls) {
 // ─────────────────────────────────────
 // ICE API FETCH  (XML Basic Auth)
 // ─────────────────────────────────────
-const ICE_URL = 'https://xml.dataservices.theice.com/xtick';
+const ICE_URL = 'https://ice-proxy.kgonciarz.workers.dev';
 
 async function fetchPrice(type) {
   const cfg = getCfg();
